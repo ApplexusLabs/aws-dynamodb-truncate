@@ -7,20 +7,33 @@ AWS.config.region = 'us-east-1';  //update for your region
 
 var dynamoDb = new AWS.DynamoDB();
 
-var primaryKeys = [];  //hold the keys for deletion
-
-
 //  As written, this only accomodates simple tables without Secondary Indexes
 //  Not to hard to include it though if you need it...this basically just reads the tables
 //  details, deletes it and recreates it.
 
 // Might want to crank up your provisioning for Writes to make this go faster
 
-function deleteBatch(tableName, primaryKeys, next) {
+function deleteBatch(tableName, next) {
 
+    var primaryKeys = [];
     var itemsToDelete = [];
 
     async.series([
+        function (callback) {
+            dynamoDb.describeTable({
+                TableName: process.argv[2]
+            }, function (err, returnDescribe) {
+                if (err) {
+                    return callback(err);
+                } else {
+                    //extract primary keys for the fetch and deletes
+                    returnDescribe.Table.KeySchema.forEach(function(element){
+                        primaryKeys.push(element.AttributeName);
+                    });
+                    callback();
+                }
+            });
+        },
         function (callback) {
             //we use scan here rather than query just for simplicity.  query 
             //would probably be faster, but then we'd have to parse our multiple keys and format
@@ -54,32 +67,17 @@ function deleteBatch(tableName, primaryKeys, next) {
                         return callback(err);
                     }
                 });
-            });
+            })
+            callback();
         }
     ], function (err) {
-
         if (err) { return next(err); }
     });
 }
 
-
-dynamoDb.describeTable({
-    TableName: process.argv[2]
-}, function (err, returnDescribe) {
+deleteBatch(process.argv[2], function next(err) {
     if (err) {
-        console.log(err, err.stack);
-    } else {
-        //extract primary keys for the fetch and deletes
-        returnDescribe.Table.KeySchema.forEach(function (element) {
-            primaryKeys.push(element.AttributeName);
-        });
-
-        deleteBatch(process.argv[2], primaryKeys, function next(err) {
-            if (err) {
-                console.log(err);
-            }
-            console.log('All done.');
-        });
-
+        console.log(err);
     }
+    console.log('All done.');
 });
