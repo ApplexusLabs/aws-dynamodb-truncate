@@ -27,7 +27,7 @@ function deleteBatch(tableName, next) {
                     return callback(err);
                 } else {
                     //extract primary keys for the fetch and deletes
-                    returnDescribe.Table.KeySchema.forEach(function(element){
+                    returnDescribe.Table.KeySchema.forEach(function (element) {
                         primaryKeys.push(element.AttributeName);
                     });
                     callback();
