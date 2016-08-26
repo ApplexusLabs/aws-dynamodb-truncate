@@ -1,4 +1,6 @@
 # aws-dynamodb-truncate
+## Unfinished!
+
 Simple script to truncate records in a DynamoDB database.  
 
 Well, it doesn't really TRUNCATE in the SQL sense.  Rather its more like DELETE * from TABLE.  If you have a huge number of records to delete, you might be better off deleting and recreating the table. 
